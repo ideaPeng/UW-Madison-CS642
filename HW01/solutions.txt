@@ -1,0 +1,34 @@
+# Part A:
+
+## Recovered password
+13145820
+
+## Pseudocode for attack
+
+Target Hash := T
+Target Password := K
+Loop over possbile password length L
+    Loop over possbile password combination P
+        C(P) := Concated result of username, password and salt
+        H(C(P)) := SHA-256 Hash of C(P)
+        If H(C(P)) = T:
+            K = P
+            End
+
+## Worst case running time
+
+Worst-case running time will be O(10^L), where L is the max possbile password length.
+
+
+## Discussion of current proposal and suggestions for improvement
+
+The choice of the hash function is good and adding salt and username before doing the hash is also good. 
+However, the password itself is not strong enough, which make attacker easy to do brute force attack. 
+Thus, I suggest that user should be require to set longer and more complex password.
+
+# Part B:
+
+## Discussion of the current scheme
+
+## Suggestions for improving the scheme
+
