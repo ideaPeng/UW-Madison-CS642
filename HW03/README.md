@@ -44,7 +44,7 @@ Here are three pcaps with example attacks in folder 2:
 2.  `portscan.pcap` includes a TCP SYN port scan.
 3.  `tcpflood.pcap` includes a TCP SYN flood.
 
-Your job is to write a software IDS (a Python script named **scanner****.py**) that takes as input a pcap trace and looks for such malicious behavior. The local network you are protecting is configured with two machines  (192.168.0.100 with MAC address 7c:d1:c3:94:9e:b8 and 192.168.0.103 with MAC address d8:96:95:01:a5:c9) and a router (192.168.0.1 with MAC  address f8:1a:67:cd:57:6e). Your scanner should:
+Your job is to write a software IDS (a Python script named **scanner****.py**) that takes as input a pcap trace and looks for such malicious behavior. The local network you are protecting is configured with two machines  (`192.168.0.100` with MAC address `7c:d1:c3:94:9e:b8` and `192.168.0.103` with MAC address `d8:96:95:01:a5:c9`) and a router (`192.168.0.1` with MAC  address `f8:1a:67:cd:57:6e`). Your scanner should:
 
 \1. Detect ARP spoofing attempts. (20 pts)
 
