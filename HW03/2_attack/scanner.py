@@ -52,13 +52,15 @@ def detect_arpspoofing(data):
         if pkt_data.type == target_eth_type :
             sha = pkt_data.arp.sha
             spa = pkt_data.arp.spa
+            if spa == b'\x00\x00\x00\x00':
+                continue
             if sha not in arp_records.keys():
                 arp_records[sha] = set()
                 arp_records[sha].add(spa)
             else:
                 arp_records[sha].add(spa)
                 if len(arp_records[sha]) > 1:
-                    print("ARP spoofing!\nMAC: {}\nPacket number: {}".format(mac_addr(sha), idx+1))
+                    print("     ARP spoofing!\n     MAC: {}\n     Packet number: {}".format(mac_addr(sha), idx+1))
                     return True
 
 def detect_port_scan(data):
@@ -78,6 +80,8 @@ def detect_port_scan(data):
             dport = ip_data.data.dport
         else:
             continue
+        if dport > 49151:
+            continue
         # TCP or UDP scanning
         if ip_data.dst not in ports_records.keys():
             ports_records[ip_data.dst] = (set([dport]), [str(idx+1)])
@@ -87,7 +91,7 @@ def detect_port_scan(data):
                 con_set[0].add(dport)
                 con_set[1].append(str(idx + 1))
                 if (len(con_set[0]) > 100):
-                    print("Port scan!\nIP: {}\nPacket number: {}".format(inet_to_str(ip_data.dst), ", ".join(con_set[1])))
+                    print("     Port scan!\n     IP: {}\n     Packet number: {}".format(inet_to_str(ip_data.dst), ", ".join(con_set[1])))
                     return True
 
 
@@ -95,6 +99,8 @@ def detect_syn_floods(data):
     target_eth_type = dpkt.ethernet.ETH_TYPE_IP
     syn_pkts = dict()
     flag = False
+    seq_no2rec = dict()
+    ack_seq_no_list = dict()
     # first filter out the SYN data
     for idx, (time_stamp, pkt_data) in enumerate(data):
         pkt_data = dpkt.ethernet.Ethernet(pkt_data)
@@ -105,10 +111,32 @@ def detect_syn_floods(data):
             continue
         if ip_data.data.flags == dpkt.tcp.TH_SYN:
             new_rec = (str(idx+1), time_stamp, pkt_data)
+            seq_no = ip_data.data.seq
             if ip_data.dst not in syn_pkts.keys():
                 syn_pkts[ip_data.dst] = [new_rec]
+                seq_no2rec[ip_data.dst] = {seq_no: 0}
             else:
+                seq_no2rec[ip_data.dst][seq_no] = len(syn_pkts[ip_data.dst])
                 syn_pkts[ip_data.dst].append(new_rec)
+    # remove syn with seq number s that has corresponding ack with seq number seq+1
+        elif ip_data.data.flags == dpkt.tcp.TH_ACK:
+            seq_no = ip_data.data.seq
+            dst = ip_data.dst
+            if dst not in seq_no2rec.keys():
+                continue
+            if seq_no-1 not in seq_no2rec[dst].keys():
+                continue
+            if dst in ack_seq_no_list.keys():
+                ack_seq_no_list[dst].append(seq_no2rec[dst][seq_no-1])
+            else:
+                ack_seq_no_list[dst] = [seq_no2rec[dst][seq_no-1]]
+            if seq_no in seq_no2rec[dst].keys():
+                ack_seq_no_list[dst].append(seq_no2rec[seq_no])
+    # remove syn pkts with corresponding acks
+    for key, val in ack_seq_no_list.items():
+        for idx in sorted(set(val), reverse=True):
+            del syn_pkts[key][idx]
+
     # check for each dst ip
     for key, val in syn_pkts.items():
         if len(val) < 100:
@@ -119,7 +147,7 @@ def detect_syn_floods(data):
             if val[j][1]-val[i][1] <= 1:
                 pkt_num_list = [x for (x, _, _) in val[i:j+1]]
                 flag = True
-                print("SYN floods!\nIP: {}\nPacket number: {}".format(inet_to_str(key), ", ".join(pkt_num_list)))
+                print("     SYN floods!\n     IP: {}\n     Packet number: {}".format(inet_to_str(key), ", ".join(pkt_num_list)))
                 break
         if flag:
             break
