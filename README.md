@@ -6,6 +6,6 @@
 
 ## Homework 02 Web Security
 
-## Homework 02
+## Homework 03 Network Security
 
 ## Homework 04

@@ -46,8 +46,8 @@ def detect_arpspoofing(data):
     # only check arp packet
     target_eth_type = dpkt.ethernet.ETH_TYPE_ARP
     arp_records = dict()
-    attacker = set()
-    for idx, (time_stamp, pkt_data) in enumerate(data):
+    attackers = set()
+    for idx, (_, pkt_data) in enumerate(data):
         pkt_data = dpkt.ethernet.Ethernet(pkt_data)
         if pkt_data.type == target_eth_type :
             sha = pkt_data.arp.sha
@@ -59,14 +59,17 @@ def detect_arpspoofing(data):
                 arp_records[sha].add(spa)
             else:
                 arp_records[sha].add(spa)
-                if len(arp_records[sha]) > 1:
-                    print("     ARP spoofing!\n     MAC: {}\n     Packet number: {}".format(mac_addr(sha), idx+1))
-                    return True
+                if sha not in attackers and len(arp_records[sha]) > 1:
+                    print("ARP spoofing!\nMAC: {}\nPacket number: {}".format(mac_addr(sha), idx+1))
+                    attackers.add(sha)
+                    # print(attackers)
+    return len(attackers) > 0
 
 def detect_port_scan(data):
     target_eth_type = dpkt.ethernet.ETH_TYPE_IP
     ports_records = dict()
-    for idx, (time_stamp, pkt_data) in enumerate(data):
+    victims = set()
+    for idx, (_, pkt_data) in enumerate(data):
         pkt_data = dpkt.ethernet.Ethernet(pkt_data)
         if pkt_data.type != target_eth_type :
             continue
@@ -90,9 +93,10 @@ def detect_port_scan(data):
             if dport not in con_set[0]:
                 con_set[0].add(dport)
                 con_set[1].append(str(idx + 1))
-                if (len(con_set[0]) > 100):
-                    print("     Port scan!\n     IP: {}\n     Packet number: {}".format(inet_to_str(ip_data.dst), ", ".join(con_set[1])))
-                    return True
+                if ip_data.dst not in victims and len(con_set[0]) > 100:
+                    victims.add(ip_data.dst)
+                    print("Port scan!\nIP: {}\nPacket number: {}".format(inet_to_str(ip_data.dst), ", ".join(con_set[1])))
+    return len(victims) > 0
 
 
 def detect_syn_floods(data):
@@ -101,6 +105,7 @@ def detect_syn_floods(data):
     flag = False
     seq_no2rec = dict()
     ack_seq_no_list = dict()
+    victims = set()
     # first filter out the SYN data
     for idx, (time_stamp, pkt_data) in enumerate(data):
         pkt_data = dpkt.ethernet.Ethernet(pkt_data)
@@ -146,12 +151,10 @@ def detect_syn_floods(data):
         while j<len(val):
             if val[j][1]-val[i][1] <= 1:
                 pkt_num_list = [x for (x, _, _) in val[i:j+1]]
-                flag = True
-                print("     SYN floods!\n     IP: {}\n     Packet number: {}".format(inet_to_str(key), ", ".join(pkt_num_list)))
+                print("SYN floods!\nIP: {}\nPacket number: {}".format(inet_to_str(key), ", ".join(pkt_num_list)))
+                victims.add(key)
                 break
-        if flag:
-            break
-    return flag
+    return len(victims) > 0
 
 
 def main():
@@ -160,12 +163,9 @@ def main():
     args = parser.parse_args()
     pcap = dpkt.pcap.Reader(args.pcap_file)
     data = list(pcap)
-    if detect_port_scan(data):
-        return
-    if detect_syn_floods(data):
-        return
-    if detect_arpspoofing(data):
-        return
+    detect_port_scan(data)
+    detect_arpspoofing(data)
+    detect_syn_floods(data)
 
 if __name__ == "__main__":
     main()
