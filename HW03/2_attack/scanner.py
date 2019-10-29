@@ -117,26 +117,29 @@ def detect_syn_floods(data):
         if ip_data.data.flags == dpkt.tcp.TH_SYN:
             new_rec = (str(idx+1), time_stamp, pkt_data)
             seq_no = ip_data.data.seq
-            if ip_data.dst not in syn_pkts.keys():
-                syn_pkts[ip_data.dst] = [new_rec]
-                seq_no2rec[ip_data.dst] = {seq_no: 0}
+            dport = ip_data.data.dport
+            if (ip_data.dst, dport) not in syn_pkts.keys():
+                syn_pkts[(ip_data.dst, dport)] = [new_rec]
+                seq_no2rec[(ip_data.dst, dport)] = {seq_no: 0}
             else:
-                seq_no2rec[ip_data.dst][seq_no] = len(syn_pkts[ip_data.dst])
-                syn_pkts[ip_data.dst].append(new_rec)
+                seq_no2rec[(ip_data.dst, dport)][seq_no] = len(syn_pkts[(ip_data.dst, dport)])
+                syn_pkts[(ip_data.dst, dport)].append(new_rec)
     # remove syn with seq number s that has corresponding ack with seq number seq+1
-        elif ip_data.data.flags == dpkt.tcp.TH_ACK:
+    # use bit mask here
+        elif (ip_data.data.flags & dpkt.tcp.TH_ACK)  == dpkt.tcp.TH_ACK:
             seq_no = ip_data.data.seq
             dst = ip_data.dst
-            if dst not in seq_no2rec.keys():
+            port = ip_data.tcp.dport
+            if (dst,port) not in seq_no2rec.keys():
                 continue
-            if seq_no-1 not in seq_no2rec[dst].keys():
+            if seq_no-1 not in seq_no2rec[(dst, port)].keys():
                 continue
-            if dst in ack_seq_no_list.keys():
-                ack_seq_no_list[dst].append(seq_no2rec[dst][seq_no-1])
+            if (dst,port) in ack_seq_no_list.keys():
+                ack_seq_no_list[(dst, port)].append(seq_no2rec[(dst,port)][seq_no-1])
             else:
-                ack_seq_no_list[dst] = [seq_no2rec[dst][seq_no-1]]
-            if seq_no in seq_no2rec[dst].keys():
-                ack_seq_no_list[dst].append(seq_no2rec[seq_no])
+                ack_seq_no_list[(dst, port)] = [seq_no2rec[(dst,port)][seq_no-1]]
+            if seq_no in seq_no2rec[(dst,port)].keys():
+                ack_seq_no_list[(dst,port)].append(seq_no2rec[(dst,port)][seq_no])
     # remove syn pkts with corresponding acks
     for key, val in ack_seq_no_list.items():
         for idx in sorted(set(val), reverse=True):
@@ -151,7 +154,7 @@ def detect_syn_floods(data):
         while j<len(val):
             if val[j][1]-val[i][1] <= 1:
                 pkt_num_list = [x for (x, _, _) in val[i:j+1]]
-                print("SYN floods!\nIP: {}\nPacket number: {}".format(inet_to_str(key), ", ".join(pkt_num_list)))
+                print("SYN floods!\nIP: {}\nPacket number: {}".format(inet_to_str(key[0]), ", ".join(pkt_num_list)))
                 victims.add(key)
                 break
     return len(victims) > 0
