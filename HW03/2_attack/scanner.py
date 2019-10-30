@@ -147,16 +147,18 @@ def detect_syn_floods(data):
 
     # check for each dst ip
     for key, val in syn_pkts.items():
-        if len(val) < 100:
+        if len(val) < 101:
             continue
         i = 0
-        j = 99
+        j = 100
         while j<len(val):
             if val[j][1]-val[i][1] <= 1:
                 pkt_num_list = [x for (x, _, _) in val[i:j+1]]
                 print("SYN floods!\nIP: {}\nPacket number: {}".format(inet_to_str(key[0]), ", ".join(pkt_num_list)))
                 victims.add(key)
                 break
+            i += 1
+            j += 1
     return len(victims) > 0
 
 
