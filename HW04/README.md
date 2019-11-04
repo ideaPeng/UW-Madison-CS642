@@ -23,7 +23,7 @@ To make the target binaries setuid-root, run:
 
 ```shell
 su
-make setuid\
+make setuid
 exit  # to get out of the root shell
 ```
 
@@ -97,7 +97,7 @@ As a team, only one person should submit the homework.
 ## Suggested reading in Phrack, www.phrack.org
 
 
--   Aleph One[Smashing the stack for fun and profit (Links to an external site.)](https://insecure.org/stf/smashstack.html)
+-   Aleph One, [Smashing the stack for fun and profit (Links to an external site.)](https://insecure.org/stf/smashstack.html)
 -   blexim, [Basic Integer Overflows (Links to an external site.)](http://phrack.org/issues/60/10.html), Phrack 60 #0x10.
 -   Gera and Riq, [Advances in Format String Exploiting (Links to an external site.)](http://phrack.org/issues/59/7.html), Phrack 59 #0x04.
 -   klog, [The Frame Pointer Overwrite (Links to an external site.)](http://phrack.org/issues/55/8.html), Phrack 55 #08.
