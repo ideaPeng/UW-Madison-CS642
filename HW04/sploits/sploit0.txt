@@ -1,0 +1,7 @@
+## General Idea of Exploitation
+Use buffer overflow to overwrite the saved EIP in the stack with the address of set `Grade` to `A`.
+
+## Steps
+- get the address (`0x0804851d`) of key statement `grade = 'A';` 
+- set the overflowed buffer to that address
+

@@ -1,0 +1,10 @@
+## General Idea of Exploitation
+Frame Pointer Overwrite: Use the last bit of buffer to overflow the last byte of saved ESP value. Thus, when the function return it will use the wrong frame pointer and thus pop of the EIP from the buffer and execute the
+instruction in the buffer.
+
+## Steps
+- Write sample code to generate buffer and execute the target program
+- Buffer structure [NOP]...[NOP][shellcode]...[shellcode][jmpAddr][modifiedESPByte]
+- Use GDB to find out the right `jmpAddr` (`0xbffffce0`) which should between the start of buffer and the start of shellcode and the right last ESP Byte (we need to calculate the offset between the final EIP addr and the ESP value)
+- Set the right `jmpAddr` and `modifiedESPByte`
+- Note that input size should not change during debug so that the address will not change because of the changing of argument size

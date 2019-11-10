@@ -1,0 +1,22 @@
+## General Idea of Exploitation
+Use double free vulnerability to change the saved EIP of the corresponding function.
+In the `tfree` function (line 117-118 in `tmalloc.c`), we can see
+
+```c
+q->s.r      = p->s.r;
+p->s.r->s.l = q;
+```
+
+where `p` is the pointer to the node to be freed. We can use the second line to change the saved EIP. 
+We can set the `left value` of `p` to our desired address for EIP (here is the address of buffer start).
+Then in the `left value` of node at the start of buffer we let the code jump into the area of our NOP and shellcode.
+
+## Steps
+- Use fix input buffer size 1024; Write sample code to generate buffer and execute the target program
+- Use GDB to find out the value of `old p` (`0x8059950`), `q` (`0x8059ae8`) and `new p` (`0x8059878`)
+- From `tmalloc.c` we know the strcture of the malloc node information and its location is at the lower 8 bytes to the address of the malloc contents
+- Attack Buffer structure [4B_FakeNode1Left][4B_FakeNode1Right][NOP]...[NOP][shellcode]...[shellcode][4B_FakeNodeQLeft][4B_FakeNodeQRight][FF]...[FF]
+- FakeNodeQ offset from the buffer start: 0x8059950-0x8059878-8 = 208
+- [4B_FakeNodeQLeft] = `0x8059878` (address of FakeNode1 in the heap); [4B_FakeNodeQRight] = `0xbffffa7c` (address of saved EIP); [4B_FakeNode1Right] = '0xbffffa7c+1' (set free bit as free); [4B_FakeNode1Left] = `NOP+NOP+JMP` (x86 instruction to jump across the FakeNode1Right)
+- Note that input size should not change during debug so that the address will not change because of the changing of argument size
+

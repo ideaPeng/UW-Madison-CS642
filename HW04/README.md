@@ -94,9 +94,9 @@ You should compress all the files into one zip file.
 
 As a team, only one person should submit the homework.
 
-## Suggested reading in Phrack, www.phrack.org
+## Suggested reading
 
-
+- Ryan (Michael) Schmidt, [RMS's gdb Debugger Tutorial](http://www.unknownroad.com/rtfm/gdbtut/gdbtoc.html)
 -   Aleph One, [Smashing the stack for fun and profit (Links to an external site.)](https://insecure.org/stf/smashstack.html)
 -   blexim, [Basic Integer Overflows (Links to an external site.)](http://phrack.org/issues/60/10.html), Phrack 60 #0x10.
 -   Gera and Riq, [Advances in Format String Exploiting (Links to an external site.)](http://phrack.org/issues/59/7.html), Phrack 59 #0x04.

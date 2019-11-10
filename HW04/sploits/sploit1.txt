@@ -1,0 +1,10 @@
+## General Idea of Exploitation
+Use buffer overflow to overwrite the save EIP with the address of the address that corresponding to the location
+of NOP before the start of shellcode in the buffer.
+
+## Steps
+- Write sample code to generate buffer and execute the target program
+- Buffer structure [NOP]...[NOP][shellcode]...[shellcode][jmpAddr]...[jmpAddr]
+- Use GDB to find out the right `jmpAddr` (`0xbffffce0`) which should between the start of buffer and the start of shellcode
+- Set the right `jmpAddr`
+- Note that input size should not change during debug so that the address will not change because of the changing of argument size
