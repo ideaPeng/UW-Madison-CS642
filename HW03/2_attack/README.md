@@ -23,3 +23,6 @@ each kind of attack per host. Only one message should be shown.
 python3 scanner.py <file-to-detect.pcap>
 ```
 
+## TODO
+- arp detection failed; should take use of link layer information
+- port scan failed; should not filter port number
