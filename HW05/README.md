@@ -41,9 +41,11 @@ Use this file to explain how the calibration and the attack works.
 ### Spectre and Meltdown
 
 1. Between Spectre and Meltdown attacks, which one is closer to be a covert channel, and why?
-   
+   Meltdown attack. Because in this attack both the sender and receiver programs of the information are created by the attacker utilizing the transient instructions and FLUSH and RELOAD timing method.
 2. Which of the two attacks do you think is stronger? Why?
+   Meltdown attack. Because it breaks the most fundamental isolation between user applications and the operating system. It allows users to do privileged things including read kernel memory. However, Spectre attacks only work in the user space.
 3. Linux released a patch with a feature called KPTI (Kernel Page Table Isolation) to defend against one of these attacks. Which one?
+   Meltdown attack.
 
 
 ## Reference Paper
