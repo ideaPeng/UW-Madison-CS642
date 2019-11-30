@@ -1,3 +1,4 @@
+// Copyright [2019] <Yidong Fang>
 #include <fcntl.h>
 #include <sched.h>
 #include <stdint.h>
@@ -18,7 +19,7 @@ int csv_offsets[] = {
     88,  85, 90, 101, 107, 91,  90,  91, 111, 100};
 
 /* Return the size of a file */
-long file_size(const char *filename) {
+int64_t file_size(const char *filename) {
   struct stat s;
   if (stat(filename, &s) != 0) {
     printf("Error reading file stats !\n");

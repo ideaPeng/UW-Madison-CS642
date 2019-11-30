@@ -1,3 +1,4 @@
+// Copyright [2019] <Yidong Fang>
 #include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -32,25 +33,26 @@ uint64_t rdtsc() {
 uint64_t measure_one_block_access_time(void *addr) {
   uint64_t cycles;
 
-  asm volatile("mov %1, %%r8\n\t"
-               "lfence\n\t"
-               "rdtsc\n\t"
-               "mov %%eax, %%edi\n\t"
-               "mov (%%r8), %%r8\n\t"
-               "lfence\n\t"
-               "rdtsc\n\t"
-               "sub %%edi, %%eax\n\t"
-               : "=a"(cycles) /*output*/
-               : "r"(addr)
-               : "r8", "edi");
+  asm volatile(
+      "mov %1, %%r8\n\t"
+      "lfence\n\t"
+      "rdtsc\n\t"
+      "mov %%eax, %%edi\n\t"
+      "mov (%%r8), %%r8\n\t"
+      "lfence\n\t"
+      "rdtsc\n\t"
+      "sub %%edi, %%eax\n\t"
+      : "=a"(cycles) /*output*/
+      : "r"(addr)
+      : "r8", "edi");
 
   return cycles;
 }
 
 int main(int argc, char **argv) {
-  char array[CACHE_SIZE]; // modern processors have 4KB ways in L1
+  char array[CACHE_SIZE];  // modern processors have 4KB ways in L1
   memset(array, -1, CACHE_SIZE * sizeof(char));
-  unsigned long hit_time = 0, miss_time = 0;
+  uint64_t hit_time = 0, miss_time = 0;
   int i;
 
   /* Calculate average hit time for a cache block */

