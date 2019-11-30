@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <x86intrin.h>
 #define HIT_THRESHOLD 30
-#define SCAN_TIME 15
+#define TEST_TIME 15
 #define CSV_ITEM_NUM 84
 
 /* Lengths of each row in the CSV file. */
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
     }
     //  Monitor the same cache set N times before monitoring the
     //   next set. (Clue: N~10 should work)
-    for (size_t i = 0; i < SCAN_TIME; i++) {
+    for (size_t i = 0; i < TEST_TIME; i++) {
       flush(offset_addrs[row_idx]);
       // Use sched_yield() while waiting for victim to access.
       sched_yield();
