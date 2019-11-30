@@ -1,53 +1,118 @@
-# Flush and Reload Attack on Shared File Memory Access
+This homework assignment needs you to understand caches structures and their behavior in modern processors to create a cache side-channel attack. This is a group assignment with a max group size of 2. Remember to write down the group members' names in the ID file, and only one group member should make a submission in Canvas.
 
-## How it Work
+### Environment
 
-In calibration program, we want to know the average of hit and miss cycles for the
-current CPU so that we can decide a proper threshold to distingish between hits
-and misses during attack. For carlibration, we just use a 4KB array and access it
-with and without cache flushing before fetching to get the average of CPU cycles
-of cache hits and cache misses. For the attack, we randomly generate a raw index
-for the CSV file and for each iteration, we measure the memory access time for 
-that row `TEST_TIME` times. We also set the CPU cycle threshold of hit and miss 
-to a number `hit_cycle_threshold`. For each test, if the access time is smaller
-than `hit_cycle_threshold`, we increase the `hit_count`. If the `hit_count`
-exceeds the `HIT_THRESHOLD`, we print the number of that row.
+It is highly recommended that you perform this assignment on any system with an Intel processor. You can use the CSL instructional machines to carry out this assignment.
 
-After some experiemtn, we set the above parameters as the following numbers:
+You can use `lscpu` to figure out details about the processor and the cache. For example,
+
 ```
-TEST_TIME = 15
-hit_cycle_threshold = hit_time + (miss_time - hit_time) / 3
-HIT_THRESHOLD = 30
+[chatterjee@royal-12: h/chatterjee]$ lscpu\
+Architecture:        x86_64\
+CPU op-mode(s):      32-bit, 64-bit\
+Byte Order:          Little Endian\
+. . .\
+L1d cache:           32K # 64 sets, 8 ways **,** 64 byte block\
+L1i cache:           32K\
+L2 cache:            256K\
+L3 cache:            6144K\
+. . .
 ```
 
-## How to Run/Test
-```shell
-make
-./attack $(./carlibration)
-./victim <number-of-rows-to-access> [...a lit of row number [1 to 84]]
+### Part A: Calibration (20 pts)
+
+Before you begin writing a cache side-channel attack, you need to figure out some details about the caches in the system you are running the attack on. Specifically, you need to figure out the cache hit and miss times (cycles). 
+
+1.  Use the `calibration.c` to write your code that prints out the cache hit and miss latencies. It is important that the output is in the exact format hit_time,miss_time. For example, if hit latency is 100 cycles and miss latency is 500 cycles, then the output of your program should be 100,500.
+2.  To calculate the average hit latency, access a cache block so that it is brought into the cache. Now measure the time to re-access that block. Repeat this experiment for all the sets in the cache and calculate the average.
+3.  To calculate the average miss latency, flush a cache block so that it is removed completely from all the caches. Measure the time to access this block. Repeat the experiment for different sets in the cache and calculate the average.
+
+### Part B: Flush Reload attack (50 pts)
+
+In this part of the assignment, you will write a side-channel attack code that uses the Flush+Reload technique to learn about some secrets being accessed by a toy victim process.
+
+You will use the hit and miss latencies that were determined using the calibration program in Part A.
+
+**Victim's Description:**
+
+The victim program (`victim.c`) reads a `Records.csv` file containing information about some employees. The `victim.c` takes a list of indices as inputs. These indices correspond to employees who are receiving a promotion. The victim accesses rows of the `Records.csv` file corresponding to the input indices to obtain details of the employees.
+
+**Attack Description:**
+
+As an attacker, your goal is to use figure out the employees who are receiving a promotion. In other words, you should determine the indices the victim is trying to access. You have access to the `Records.csv` file which means that this file is shared between the victim and you. Use the Flush+Reload technique to monitor the lines accessed by the victim. You should use the hit and miss times (should be passed as a comma-separated argument to `attack.c`) calculated in part A to assist you in the attack.
+
+Note:
+
+1.  We recommend that you do not edit the `victim.c` because we would be testing your solutions on the unmodified version of `victim.c`. If it helps, you can edit while you are building your solution but make sure that your final solution would work on an unmodified `victim.c`
+2.  Do not hard code the values of hit and miss latencies in your attack. These values can vary across machines.
+
+**Running the attack**:
+
+1\. Open a terminal and run the attack: ./attack $(./calibration)
+
+Open another terminal and run the victim: ./victim 3 2 4 5  (Or something similar)
+
+OR
+
+2\. Run the attack and victim together:
+
+./victim N indices... & ./attack $(./calibration)
+
+3\. The attack needs to run forever. You could use a Keyboard Interrupt (Ctrl+C) to terminate the attack program after the victim has finished execution.
+
+**Output Format:**
+
+1\. The output of `calibration.c` should be as follows: hit_time,miss_time
+
 ```
-Use this file to explain how the calibration and the attack works.
+Example: 80,400
+```
 
-## Part C Questions
+2\. The output of the `attack.c` should be the list of indices with each index printed on a new line. Here's an example:
 
-### Prime+Probe
+```
+./victim 2 12 43 & ./attack $(./calibration)
 
-1. If you were to carry out an attack similar to the one described in Part B but using Prime+Probe technique, would it be easier or harder than the Flush+Reload method? Why?
-   If would be harder. Because 1) We need to fill all the caches that in the CPU during Prime step. 2) It is hard to know which cache line corresponds to which row for the CSV files. 3) Some other program may also displace the cache, introducing more noise.
+Expected output:
 
-2. How does the cache organisation (number of levels, cache size) affect Prime+Probe attack? Is that any different from Flush+Reload?
-   If there are multiple cache levels and the victim and the attacker's programs are running on the different cores, the victim program may only displace the cache at the shared level, which make the Prime+Probe difficult. Also, if the cache size is large, P&P method will requires to fill more cache and monitor those cache more frequently to reduce the noise. However, Flush+Reload will not affect by those kind of problems and it will work as long as the attacker program and the victim program shared some level of cache.
+12\
+43
+```
 
-### Spectre and Meltdown
+**Pseudocode:**
 
-1. Between Spectre and Meltdown attacks, which one is closer to be a covert channel, and why?
-   Meltdown attack. Because in this attack both the sender and receiver programs of the information are created by the attacker utilizing the transient instructions and FLUSH and RELOAD timing method.
-2. Which of the two attacks do you think is stronger? Why?
-   Meltdown attack. Because it breaks the most fundamental isolation between user applications and the operating system. It allows users to do privileged things including read kernel memory. However, Spectre attacks only work in the user space.
-3. Linux released a patch with a feature called KPTI (Kernel Page Table Isolation) to defend against one of these attacks. Which one?
-   Meltdown attack.
+To help you out here's pseudocode for the attack:
 
+```
+while(1):
+ For each set in cache_sets:
+ Do this multiple times:
+   Monitor the access time of the block
+   If access time is less than cache hit threshold:
+     Take note
+ Determine the set with highest cache hits
+ Print the index corresponding to the determined block
+```
 
-## Reference Paper
+### Part C: Questions (30 pts)
 
-Yarom, Yuval, and Katrina Falkner. ["FLUSH+ RELOAD: a high resolution, low noise, L3 cache side-channel attack."](https://www.usenix.org/conference/usenixsecurity14/technical-sessions/presentation/yarom) 23rd {USENIX} Security Symposium ({USENIX} Security 14). 2014.
+**Prime+Probe:**
+
+1.  If you were to carry out an attack similar to the one described in Part B but using Prime+Probe technique, would it be easier or harder than the Flush+Reload method? Why?
+2.  How does the cache organisation (number of levels, cache size) affect Prime+Probe attack? Is that any different from Flush+Reload?
+
+**Spectre and Meltdown:**
+
+1.  Between Spectre and Meltdown attacks, which one is closer to be a covert channel, and why?
+2.  Which of the two attacks do you think is stronger? Why?
+3.  Linux released a patch with a feature called KPTI (Kernel Page Table Isolation) to defend against one of these attacks. Which one?
+
+### Submission:
+
+You need to submit:
+
+1.  The source code for `calibration.c` and `attack.c`
+2.  ID: this includes your partner's and your netIDs and names.
+3.  solutions.txt: This file should explain the calibration procedure and the attack. Also briefly talk about your implementation of the Flush+Reload attack. If you **don't explain, you won't get full credits** even if your code works. This file should also include the answers to questions in Part C.
+
+You should compress all the files into one zip file.  As a team, only one person should submit the homework.

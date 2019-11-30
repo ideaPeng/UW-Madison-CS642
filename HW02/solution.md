@@ -81,4 +81,6 @@ In the above function `_checkLogin`, we can notice that the code will first chec
 For the username manipulation, we can simply append `';--` , making the SQL terminate and let the rest of the text be the comment. For example, when we want to login to the user account `attacker`, we will first register the account `attacker';--` and then we use this username again and a arbitrary password to login. The account we login will be `attack`.
 
 ### TODO
-- Add redirection after logging in
+- For a, add redirection after sending the request
+- For c, add redirection after logging in
+
