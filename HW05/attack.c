@@ -138,8 +138,8 @@ int main(int argc, char *argv[]) {
       if (previous != row_idx) {
         printf("%d\n", row_idx + 1);
         // hit_count[row_idx] = 0;
-	// clear count before this to make it more robust
-	for(size_t i = 0; i <= row_idx; i++) {
+	// clear count to make it more robust
+	for(size_t i = 0; i < CSV_ITEM_NUM; i++) {
 	  hit_count[i] = 0;
 	}
       }

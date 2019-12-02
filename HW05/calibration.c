@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #define TEST_NUM 1000
 #define CACHE_SIZE 4 * 1024
 
@@ -69,6 +70,7 @@ int main(int argc, char **argv) {
   for (int j = 0; j < CACHE_SIZE; j++) {
     for (i = 0; i < TEST_NUM; i++) {
       flush(array + j);
+      sched_yield();
       miss_time += measure_one_block_access_time(array + j);
     }
   }
